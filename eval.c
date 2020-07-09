@@ -6,22 +6,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BOOK_DEEPTH 6
+#define BOOK_DEEPTH 4
 #define BOOK_NUMBER (60 / BOOK_DEEPTH)
 
-#define LEARNING_RATE 0.002
+#define LEARNING_RATE 0.0040
 
-int16 eval_array_diagonall_8[BOOK_NUMBER][1 << (16 - 1)];
-int16 eval_array_diagonall_7[BOOK_NUMBER][1 << (14 - 1)];
-int16 eval_array_diagonall_6[BOOK_NUMBER][1 << (12 - 1)];
-int16 eval_array_diagonall_5[BOOK_NUMBER][1 << (10 - 1)];
-int16 eval_array_diagonall_4[BOOK_NUMBER][1 << (8 - 1)];
-int16 eval_array_diagonall_321[BOOK_NUMBER][1 << (12 - 1)];
+int16 eval_array_diagonall_8[BOOK_NUMBER][1 << 16];
+int16 eval_array_diagonall_7[BOOK_NUMBER][1 << 14];
+int16 eval_array_diagonall_6[BOOK_NUMBER][1 << 12];
+int16 eval_array_diagonall_5[BOOK_NUMBER][1 << 10];
+int16 eval_array_diagonall_4[BOOK_NUMBER][1 << 8];
+int16 eval_array_diagonall_321[BOOK_NUMBER][1 << 12];
 
-int16 eval_array_straight_1[BOOK_NUMBER][1 << (16 - 1)];
-int16 eval_array_straight_2[BOOK_NUMBER][1 << (16 - 1)];
-int16 eval_array_straight_3[BOOK_NUMBER][1 << (16 - 1)];
-int16 eval_array_straight_4[BOOK_NUMBER][1 << (16 - 1)];
+int16 eval_array_straight_1[BOOK_NUMBER][1 << 16];
+int16 eval_array_straight_2[BOOK_NUMBER][1 << 16];
+int16 eval_array_straight_3[BOOK_NUMBER][1 << 16];
+int16 eval_array_straight_4[BOOK_NUMBER][1 << 16];
 
 uint16 pattern_horizontal(uint64 pos, int16 offset){
     pos = pos >> offset;
@@ -353,7 +353,7 @@ void learn_pattern(uint8 left, uint8 right, int8 offset, int16 *array, int16 dif
     array[pattern_reverse] = new_value;
 }
 
-void learn_position(uint64 my,uint64 opp,int32 v_prime){
+int32 learn_position(uint64 my,uint64 opp,int32 v_prime){
     int32 v = eval(my,opp);
 
     float diff_prime = ( v_prime - v ) * LEARNING_RATE;
@@ -525,6 +525,8 @@ void learn_position(uint64 my,uint64 opp,int32 v_prime){
     right = pattern_diagonal_rt2lb_r_321(opp);
     learn_pattern(left,right,4,eval_array_diagonall_321[book_number],diff);
 
+    return v_prime - v ;
+
 }
 
 void init_eval(char *array){
@@ -585,7 +587,7 @@ void init_eval(char *array){
 }
 
 void load_eval(){
-    FILE *fin=fopen("model.bin","rb");//打开文件，返回文件操作符
+    FILE *fin=fopen("model.bin","rb");
     if(fin) {
         char *data;
 
@@ -595,14 +597,13 @@ void load_eval(){
         data = (char *)malloc(length + 1);
 
         memset(data, 0, length + 1);
-        fread(fin, 1, length, fin);
+        fread(data, 1, length, fin);
 
         init_eval(data);
 
         free(data);
-
+        fclose(fin);
     }
-    fclose(fin);
 }
 
 void save_value(int32 i, int8 offset, int16 *array, int16 *value){

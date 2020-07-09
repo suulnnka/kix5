@@ -9,7 +9,7 @@ uint64 flip_slow(uint64 my, uint64 opp, uint64 m){
 }
 uint64 flip_dir(uint64 my,uint64 opp,uint64 m,uint8 dir){
 	uint64 l,r;
-	l = ( m << dir ) & opp;		r = ( m >> dir ) & opp;
+	l  = ( m << dir ) & opp;	r  = ( m >> dir ) & opp;
 	l |= ( l << dir ) & opp;	r |= ( r >> dir ) & opp;
 	l |= ( l << dir ) & opp;	r |= ( r >> dir ) & opp;
 	l |= ( l << dir ) & opp;	r |= ( r >> dir ) & opp;
