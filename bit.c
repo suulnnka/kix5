@@ -7,6 +7,7 @@ uint8 bit_count(uint64 x){
 uint8 bit_to_x(uint64 x){
 	return __builtin_ctzll(x);
 }
+
 uint64 get_some_move(uint64 my,uint64 mask,uint8 dir){
 	uint64 flip;
 	flip = (( my << dir ) | ( my >> dir )) & mask;
@@ -17,6 +18,7 @@ uint64 get_some_move(uint64 my,uint64 mask,uint8 dir){
 	flip |= (( flip << dir ) | (flip >> dir )) & mask;
 	return ( flip << dir ) | ( flip >> dir );
 }
+
 uint64 get_move(uint64 my,uint64 opp){
 	return (get_some_move(my , opp & 0x007E7E7E7E7E7E00ull , 9 )
 		| get_some_move(my , opp & 0x007E7E7E7E7E7E00ull , 7 )

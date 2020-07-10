@@ -5,11 +5,8 @@
 
 #include <stdio.h>
 
-#define MAX_INT32 2147483647
-#define FIXED_BIT 11
-
-int32 depth_end = 12;
-int32 depth_mid = 6;
+int32 depth_end = 20;
+int32 depth_mid = 12;
 
 void set_depth(int16 mid, int16 end){
 	depth_mid = mid;
@@ -159,7 +156,7 @@ uint16 search_mid(uint8 depth, uint64 my, uint64 opp, int32 *value){
 	for(int32 i = 0 ; i < move_count ; i ++){
 		uint64 move = 1ull << move_list[i];
 		uint64 flipped = flip_slow( my, opp, move );
-		move_value[ move_list[i] ] = -get_move( opp ^ flipped, my | flipped | move );
+		move_value[ move_list[i] ] = -bit_count(get_move( opp ^ flipped, my | flipped | move ));
 	}
 
 	sort_insert(move_list, move_count, move_value);
@@ -202,7 +199,7 @@ uint16 search_end(uint8 depth, uint64 my, uint64 opp, int32 *value){
 	for(int32 i = 0 ; i < move_count ; i ++){
 		uint64 move = 1ull << move_list[i];
 		uint64 flipped = flip_slow( my, opp, move );
-		move_value[ move_list[i] ] = -get_move( opp ^ flipped, my | flipped | move );
+		move_value[ move_list[i] ] = -bit_count(get_move( opp ^ flipped, my | flipped | move ));
 	}
 
 	sort_insert(move_list, move_count, move_value);

@@ -31,7 +31,9 @@ int fforum(){
     int n = 0;
     while( fgets(str,1000,in) != NULL ){
         n ++;
-        if(n == 26){break;}
+        if(n < 0){continue;}
+        if(n == 30){break;}
+        
         int len = strlen(str);
 
         white = 0ull;
@@ -75,7 +77,7 @@ int fforum(){
         // int pos = end_search(space_number,my,opp,&best_score);
         int pos = search_end(space_number,my,opp,&best_score);
 
-        float best_score_float = (float)best_score / ( 1 << 11) ;
+        float best_score_float = (float)best_score / ( 1 << FIXED_BIT) ;
 
         int x = pos / 8;
         int y = pos % 8;
@@ -131,7 +133,7 @@ float run(int show){
         uint64 move = 1ull << pos;
 
         if(show){
-            float best_score_float = (float)value / ( 1 << 11) ;
+            float best_score_float = (float)value / ( 1 << FIXED_BIT) ;
 
             int x = pos / 8;
             int y = pos % 8;
@@ -141,13 +143,13 @@ float run(int show){
             out[1] = '1' + x;
             out[2] = '\0';
 
-            printf("%s:%.0f\n", out, best_score_float);
+            printf("%s:%.2f\n", out, best_score_float);
         }
 
         int32 diff = learn_position(my,opp,value);
 
         diff = diff > 0 ? diff : - diff ;
-        total_diff += (float)diff / (1 << 11);
+        total_diff += (float)diff / (1 << FIXED_BIT);
 
 		uint64 flipped = flip_slow( my, opp, move );
 
@@ -183,9 +185,9 @@ int main(){
     // return 0;
 
     load_eval();
-    int A = 100;
-    int B = 200;
-    set_depth(4,8);
+    int A = 10;
+    int B = 10;
+    set_depth(7,13);
     for(int i = 0 ; i < A ; i ++){
         float total_diff = 0;
         for(int i = 0 ; i < B ; i ++){
@@ -194,7 +196,7 @@ int main(){
         printf("diff: %.1f\n",total_diff / B);
     }
     save_eval();
-    set_depth(8,16);
+    set_depth(10,18);
     run(1);
     return 0;
 }

@@ -9,295 +9,14 @@
 #define BOOK_DEEPTH 4
 #define BOOK_NUMBER (60 / BOOK_DEEPTH)
 
-#define LEARNING_RATE 0.0040
+// #define LEARNING_RATE 0.0065
+#define LEARNING_RATE 0.00023
 
-int16 eval_array_diagonall_8[BOOK_NUMBER][1 << 16];
-int16 eval_array_diagonall_7[BOOK_NUMBER][1 << 14];
-int16 eval_array_diagonall_6[BOOK_NUMBER][1 << 12];
-int16 eval_array_diagonall_5[BOOK_NUMBER][1 << 10];
-int16 eval_array_diagonall_4[BOOK_NUMBER][1 << 8];
-int16 eval_array_diagonall_321[BOOK_NUMBER][1 << 12];
+#define one_book_total_number (6561 * 5 + 2187 + 729 + 243 + 81 + 729)
 
-int16 eval_array_straight_1[BOOK_NUMBER][1 << 16];
-int16 eval_array_straight_2[BOOK_NUMBER][1 << 16];
-int16 eval_array_straight_3[BOOK_NUMBER][1 << 16];
-int16 eval_array_straight_4[BOOK_NUMBER][1 << 16];
+int32 power_3_array[] = { 1, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049 };
 
-uint16 pattern_horizontal(uint64 pos, int16 offset){
-    pos = pos >> offset;
-    pos = pos & 0x00000000000000FFull;
-    uint16 pattern = pos;
-    return pattern;
-}
-
-uint16 pattern_vertical(uint64 pos, int16 offset){
-    pos = pos >> offset;
-    pos = pos & 0x0101010101010101ull;
-    pos = pos * 0x8040201008040201ull;
-    uint16 pattern = pos >> 56;
-    return pattern;
-}
-
-int32 eval_horizontal(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint64 left = my >> offset ;
-    uint64 right = opp >> offset ;
-
-    left = left & 0x00000000000000FFull;
-    right = right & 0x00000000000000FFull;
-
-    uint16 pattern = ( left << 8 ) | right;
-
-    return book[pattern];
-}
-
-int32 eval_vertical(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint64 left = my >> offset ;
-    uint64 right = opp >> offset ;
-
-    left  = left  & 0x0101010101010101ull;
-    right = right & 0x0101010101010101ull;
-
-    left  = left  * 0x8040201008040201ull;
-    right = right * 0x8040201008040201ull;
-
-    uint16 pattern = ( left >> 48 ) | ( right >> 56 );
-
-    return book[pattern];
-}
-
-uint16 pattern_diagonal_lt2rb_r(uint64 pos,int16 offset){
-    uint64 current = pos << offset;
-    current = current & 0x8040201008040201ull;
-    current = current * 0x0101010101010101ull;
-    uint16 pattern = current >> ( 56 + offset );
-    return pattern;
-}
-
-uint16 pattern_diagonal_lt2rb_l(uint64 pos,int16 offset){
-    uint64 current = pos >> offset;
-    current = current & 0x8040201008040201ull;
-    current = current * 0x0101010101010101ull;
-    uint16 pattern = ( current << offset ) >> ( 56 + offset );
-    return pattern;
-}
-
-uint16 pattern_diagonal_rt2lb_r(uint64 pos,int16 offset){
-    uint64 current = pos << offset;
-    current = current & 0x0102040810204080ull;
-    current = current * 0x0101010101010101ull;
-    uint16 pattern = current >> ( 56 + offset );
-    return pattern;
-}
-
-uint16 pattern_diagonal_rt2lb_l(uint64 pos,int16 offset){
-    uint64 current = pos >> offset;
-    current = current & 0x0102040810204080ull;
-    current = current * 0x0101010101010101ull;
-    uint16 pattern = ( current << offset ) >> ( 56 + offset );
-    return pattern;
-}
-
-int32 eval_diagonal_lt2rb_l(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint16 pattern_l = pattern_diagonal_lt2rb_l(my,offset);
-    uint16 pattern_r = pattern_diagonal_lt2rb_l(opp,offset);
-    uint16 pattern = ( pattern_l << ( 8 - offset ) ) | pattern_r;
-    return book[pattern];
-}
-
-int32 eval_diagonal_lt2rb_r(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint16 pattern_l = pattern_diagonal_lt2rb_r(my,offset);
-    uint16 pattern_r = pattern_diagonal_lt2rb_r(opp,offset);
-    uint16 pattern = ( pattern_l << ( 8 - offset ) ) | pattern_r;
-    return book[pattern];
-}
-
-int32 eval_diagonal_rt2lb_l(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint16 pattern_l = pattern_diagonal_rt2lb_l(my,offset);
-    uint16 pattern_r = pattern_diagonal_rt2lb_l(opp,offset);
-    uint16 pattern = ( pattern_l << ( 8 - offset ) ) | pattern_r;
-    return book[pattern];
-}
-
-int32 eval_diagonal_rt2lb_r(uint64 my,uint64 opp,int16 offset, int16 *book){
-    uint16 pattern_l = pattern_diagonal_rt2lb_r(my,offset);
-    uint16 pattern_r = pattern_diagonal_rt2lb_r(opp,offset);
-    uint16 pattern = ( pattern_l << ( 8 - offset ) ) | pattern_r;
-    return book[pattern];
-}
-
-uint16 pattern_diagonal_lt2rb_l_321(uint64 pos){
-    uint16 pattern_3 = pattern_diagonal_lt2rb_l(pos,5);
-    uint16 pattern_2 = pattern_diagonal_lt2rb_l(pos,6);
-    uint16 pattern_1 = pattern_diagonal_lt2rb_l(pos,7);
-    uint16 pattern =    ( pattern_3 << 3 ) |
-                        ( pattern_2 << 1 ) |
-                        ( pattern_1 ) ;
-    return pattern;
-}
-
-uint16 pattern_diagonal_lt2rb_r_321(uint64 pos){
-    uint16 pattern_3 = pattern_diagonal_lt2rb_r(pos,5);
-    uint16 pattern_2 = pattern_diagonal_lt2rb_r(pos,6);
-    uint16 pattern_1 = pattern_diagonal_lt2rb_r(pos,7);
-    uint16 pattern =    ( pattern_3 << 3 ) |
-                        ( pattern_2 << 1 ) |
-                        ( pattern_1 ) ;
-    return pattern;
-}
-
-uint16 pattern_diagonal_rt2lb_l_321(uint64 pos){
-    uint16 pattern_3 = pattern_diagonal_rt2lb_l(pos,5);
-    uint16 pattern_2 = pattern_diagonal_rt2lb_l(pos,6);
-    uint16 pattern_1 = pattern_diagonal_rt2lb_l(pos,7);
-    uint16 pattern =    ( pattern_3 << 3 ) |
-                        ( pattern_2 << 1 ) |
-                        ( pattern_1 ) ;
-    return pattern;
-}
-
-uint16 pattern_diagonal_rt2lb_r_321(uint64 pos){
-    uint16 pattern_3 = pattern_diagonal_rt2lb_r(pos,5);
-    uint16 pattern_2 = pattern_diagonal_rt2lb_r(pos,6);
-    uint16 pattern_1 = pattern_diagonal_rt2lb_r(pos,7);
-    uint16 pattern =    ( pattern_3 << 3 ) |
-                        ( pattern_2 << 1 ) |
-                        ( pattern_1 ) ;
-    return pattern;
-}
-
-int32 eval_diagonal_lt2rb_l_321(uint64 my,uint64 opp, int16 *book){
-    uint16 pattern_3_l = pattern_diagonal_lt2rb_l(my,5);
-    uint16 pattern_3_r = pattern_diagonal_lt2rb_l(opp,5);
-
-    uint16 pattern_2_l = pattern_diagonal_lt2rb_l(my,6);
-    uint16 pattern_2_r = pattern_diagonal_lt2rb_l(opp,6);
-
-    uint16 pattern_1_l = pattern_diagonal_lt2rb_l(my,7);
-    uint16 pattern_1_r = pattern_diagonal_lt2rb_l(opp,7);
-
-    uint16 pattern =    ( pattern_3_l << 9 ) |
-                        ( pattern_2_l << 7 ) |
-                        ( pattern_1_l << 6 ) |
-                        ( pattern_3_r << 3 ) |
-                        ( pattern_2_r << 1 ) |
-                        ( pattern_1_r ) ;
-
-    return book[pattern];
-}
-
-int32 eval_diagonal_lt2rb_r_321(uint64 my,uint64 opp, int16 *book){
-    uint16 pattern_3_l = pattern_diagonal_lt2rb_r(my,5);
-    uint16 pattern_3_r = pattern_diagonal_lt2rb_r(opp,5);
-
-    uint16 pattern_2_l = pattern_diagonal_lt2rb_r(my,6);
-    uint16 pattern_2_r = pattern_diagonal_lt2rb_r(opp,6);
-
-    uint16 pattern_1_l = pattern_diagonal_lt2rb_r(my,7);
-    uint16 pattern_1_r = pattern_diagonal_lt2rb_r(opp,7);
-
-    uint16 pattern =    ( pattern_3_l << 9 ) |
-                        ( pattern_2_l << 7 ) |
-                        ( pattern_1_l << 6 ) |
-                        ( pattern_3_r << 3 ) |
-                        ( pattern_2_r << 1 ) |
-                        ( pattern_1_r ) ;
-
-    return book[pattern];
-}
-
-int32 eval_diagonal_rt2lb_l_321(uint64 my,uint64 opp, int16 *book){
-    uint16 pattern_3_l = pattern_diagonal_rt2lb_l(my,5);
-    uint16 pattern_3_r = pattern_diagonal_rt2lb_l(opp,5);
-
-    uint16 pattern_2_l = pattern_diagonal_rt2lb_l(my,6);
-    uint16 pattern_2_r = pattern_diagonal_rt2lb_l(opp,6);
-
-    uint16 pattern_1_l = pattern_diagonal_rt2lb_l(my,7);
-    uint16 pattern_1_r = pattern_diagonal_rt2lb_l(opp,7);
-
-    uint16 pattern =    ( pattern_3_l << 9 ) |
-                        ( pattern_2_l << 7 ) |
-                        ( pattern_1_l << 6 ) |
-                        ( pattern_3_r << 3 ) |
-                        ( pattern_2_r << 1 ) |
-                        ( pattern_1_r ) ;
-
-    return book[pattern];
-}
-
-int32 eval_diagonal_rt2lb_r_321(uint64 my,uint64 opp, int16 *book){
-    uint16 pattern_3_l = pattern_diagonal_rt2lb_r(my,5);
-    uint16 pattern_3_r = pattern_diagonal_rt2lb_r(opp,5);
-
-    uint16 pattern_2_l = pattern_diagonal_rt2lb_r(my,6);
-    uint16 pattern_2_r = pattern_diagonal_rt2lb_r(opp,6);
-
-    uint16 pattern_1_l = pattern_diagonal_rt2lb_r(my,7);
-    uint16 pattern_1_r = pattern_diagonal_rt2lb_r(opp,7);
-
-    uint16 pattern =    ( pattern_3_l << 9 ) |
-                        ( pattern_2_l << 7 ) |
-                        ( pattern_1_l << 6 ) |
-                        ( pattern_3_r << 3 ) |
-                        ( pattern_2_r << 1 ) |
-                        ( pattern_1_r ) ;
-
-    return book[pattern];
-}
-
-int32 eval(uint64 my,uint64 opp){
-    int count = bit_count(my) + bit_count(opp);
-
-    int book_number = ( count - 4 ) / BOOK_DEEPTH ;
-
-    int32 value = 0;
-
-    value += eval_horizontal(my, opp, 7*8, eval_array_straight_1[book_number]);
-    value += eval_horizontal(my, opp, 6*8, eval_array_straight_2[book_number]);
-    value += eval_horizontal(my, opp, 5*8, eval_array_straight_3[book_number]);
-    value += eval_horizontal(my, opp, 4*8, eval_array_straight_4[book_number]);
-    value += eval_horizontal(my, opp, 3*8, eval_array_straight_4[book_number]);
-    value += eval_horizontal(my, opp, 2*8, eval_array_straight_3[book_number]);
-    value += eval_horizontal(my, opp, 1*8, eval_array_straight_2[book_number]);
-    value += eval_horizontal(my, opp, 0*8, eval_array_straight_1[book_number]);
-
-    value += eval_vertical(my, opp, 7, eval_array_straight_1[book_number]);
-    value += eval_vertical(my, opp, 6, eval_array_straight_2[book_number]);
-    value += eval_vertical(my, opp, 5, eval_array_straight_3[book_number]);
-    value += eval_vertical(my, opp, 4, eval_array_straight_4[book_number]);
-    value += eval_vertical(my, opp, 3, eval_array_straight_4[book_number]);
-    value += eval_vertical(my, opp, 2, eval_array_straight_3[book_number]);
-    value += eval_vertical(my, opp, 1, eval_array_straight_2[book_number]);
-    value += eval_vertical(my, opp, 0, eval_array_straight_1[book_number]);
-
-    value += eval_diagonal_lt2rb_l(my, opp, 4, eval_array_diagonall_4[book_number]);
-    value += eval_diagonal_lt2rb_r(my, opp, 4, eval_array_diagonall_4[book_number]);
-    value += eval_diagonal_lt2rb_l(my, opp, 3, eval_array_diagonall_5[book_number]);
-    value += eval_diagonal_lt2rb_r(my, opp, 3, eval_array_diagonall_5[book_number]);
-    value += eval_diagonal_lt2rb_l(my, opp, 2, eval_array_diagonall_6[book_number]);
-    value += eval_diagonal_lt2rb_r(my, opp, 2, eval_array_diagonall_6[book_number]);
-    value += eval_diagonal_lt2rb_l(my, opp, 1, eval_array_diagonall_7[book_number]);
-    value += eval_diagonal_lt2rb_r(my, opp, 1, eval_array_diagonall_7[book_number]);
-    value += eval_diagonal_lt2rb_l_321(my, opp, eval_array_diagonall_321[book_number]);
-    value += eval_diagonal_lt2rb_r_321(my, opp, eval_array_diagonall_321[book_number]);
-    value += eval_diagonal_lt2rb_r(my, opp, 0, eval_array_diagonall_8[book_number]);
-
-    value += eval_diagonal_rt2lb_l(my, opp, 4, eval_array_diagonall_4[book_number]);
-    value += eval_diagonal_rt2lb_r(my, opp, 4, eval_array_diagonall_4[book_number]);
-    value += eval_diagonal_rt2lb_l(my, opp, 3, eval_array_diagonall_5[book_number]);
-    value += eval_diagonal_rt2lb_r(my, opp, 3, eval_array_diagonall_5[book_number]);
-    value += eval_diagonal_rt2lb_l(my, opp, 2, eval_array_diagonall_6[book_number]);
-    value += eval_diagonal_rt2lb_r(my, opp, 2, eval_array_diagonall_6[book_number]);
-    value += eval_diagonal_rt2lb_l(my, opp, 1, eval_array_diagonall_7[book_number]);
-    value += eval_diagonal_rt2lb_r(my, opp, 1, eval_array_diagonall_7[book_number]);
-    value += eval_diagonal_rt2lb_l_321(my, opp, eval_array_diagonall_321[book_number]);
-    value += eval_diagonal_rt2lb_r_321(my, opp, eval_array_diagonall_321[book_number]);
-    value += eval_diagonal_rt2lb_r(my, opp, 0, eval_array_diagonall_8[book_number]);
-
-    return value;
-}
-
-int32 one_book_total_number = 6561 * 5 + 2187 + 729 + 243 + 81 + 729;
+int16 eval_array[BOOK_NUMBER][one_book_total_number]; 
 
 int32 straight_1_start = 0;
 int32 straight_2_start = 6561 * 1;
@@ -310,47 +29,96 @@ int32 diagonall_5_start = 6561 * 5 + 2187 + 729;
 int32 diagonall_4_start = 6561 * 5 + 2187 + 729 + 243;
 int32 diagonall_321_start = 6561 * 5 + 2187 + 729 + 243 + 81;
 
-void power_3_number_to_pattern(int32 number, uint8 *l, uint8 *r){
-    uint8 left = 0;
-    uint8 right = 0;
-    for(int32 i = 0 ; i < 8 ; i ++){
-        int32 n = number % 3;
-        if(n == 1){
-            left = left | ( 1 << i );
-        }
-        if(n == 2){
-            right = right | ( 1 << i );
-        }
-        number = number / 3;
-    }
-    (*l) = left;
-    (*r) = right;
+int32 eval_pattern(int16 *array, int8 x1, int8 x2, int8 x3, int8 x4, int8 x5, int8 x6, int8 x7, int8 x8){
+    int32 pattern = power_3_array[0] * x1 +
+                    power_3_array[1] * x2 + 
+                    power_3_array[2] * x3 + 
+                    power_3_array[3] * x4 + 
+                    power_3_array[4] * x5 + 
+                    power_3_array[5] * x6 + 
+                    power_3_array[6] * x7 + 
+                    power_3_array[7] * x8 ;
+    return array[pattern];
 }
 
-void update_value(int32 i, int8 offset, int16 *array, int16 value){
-    if(value == 0){
-        return;
-    }
-    uint8 left;
-    uint8 right;
-    power_3_number_to_pattern(i,&left,&right);
-    uint16 pattern = ( (uint16)left << offset ) | (uint16)right;
-    left = reverse_bit(left);
-    right = reverse_bit(right);
-    uint16 pattern_reverse = ( (uint16)left << offset ) | (uint16)right;
-    array[pattern] = value;
-    array[pattern_reverse] = value;
+void update_pattern(int16 *array, int8 x1, int8 x2, int8 x3, int8 x4, int8 x5, int8 x6, int8 x7, int8 x8,int32 diff){
+    int32 pattern = power_3_array[0] * x1 +
+                    power_3_array[1] * x2 + 
+                    power_3_array[2] * x3 + 
+                    power_3_array[3] * x4 + 
+                    power_3_array[4] * x5 + 
+                    power_3_array[5] * x6 + 
+                    power_3_array[6] * x7 + 
+                    power_3_array[7] * x8 ;
+    array[pattern] += diff;
 }
 
-void learn_pattern(uint8 left, uint8 right, int8 offset, int16 *array, int16 diff){
-    uint16 pattern = ( (uint16)left << offset ) | (uint16)right;
-    left = reverse_bit(left);
-    right = reverse_bit(right);
-    uint16 pattern_reverse = ( (uint16)left << offset ) | (uint16)right;
+int32 eval(uint64 my,uint64 opp){
 
-    int16 new_value = array[pattern] + diff;
-    array[pattern] = new_value;
-    array[pattern_reverse] = new_value;
+    int32 my_count  = bit_count(my);
+    int32 opp_count = bit_count(opp);
+
+    int32 book_number = ( my_count + opp_count - 4 ) / BOOK_DEEPTH ;
+
+    int8 b[64];
+
+    for( int8 i = 0 ; i < 64 ; i ++){
+        b[i] = ( my & 1ull ) + ( ( opp & 1ull ) << 1 ) ;
+        my = my >> 1;
+        opp = opp >> 1;
+    }
+
+    int32 value = 0;
+
+    int16 *array = eval_array[book_number];
+
+    value += eval_pattern(array + straight_1_start,b[A1],b[A2],b[A3],b[A4],b[A5],b[A6],b[A7],b[A8]);
+    value += eval_pattern(array + straight_2_start,b[B1],b[B2],b[B3],b[B4],b[B5],b[B6],b[B7],b[B8]);
+    value += eval_pattern(array + straight_3_start,b[C1],b[C2],b[C3],b[C4],b[C5],b[C6],b[C7],b[C8]);
+    value += eval_pattern(array + straight_4_start,b[D1],b[D2],b[D3],b[D4],b[D5],b[D6],b[D7],b[D8]);
+    value += eval_pattern(array + straight_4_start,b[E1],b[E2],b[E3],b[E4],b[E5],b[E6],b[E7],b[E8]);
+    value += eval_pattern(array + straight_3_start,b[F1],b[F2],b[F3],b[F4],b[F5],b[F6],b[F7],b[F8]);
+    value += eval_pattern(array + straight_2_start,b[G1],b[G2],b[G3],b[G4],b[G5],b[G6],b[G7],b[G8]);
+    value += eval_pattern(array + straight_1_start,b[H1],b[H2],b[H3],b[H4],b[H5],b[H6],b[H7],b[H8]);
+
+    value += eval_pattern(array + straight_1_start,b[A1],b[B1],b[C1],b[D1],b[E1],b[F1],b[G1],b[H1]);
+    value += eval_pattern(array + straight_2_start,b[A2],b[B2],b[C2],b[D2],b[E2],b[F2],b[G2],b[H2]);
+    value += eval_pattern(array + straight_3_start,b[A3],b[B3],b[C3],b[D3],b[E3],b[F3],b[G3],b[H3]);
+    value += eval_pattern(array + straight_4_start,b[A4],b[B4],b[C4],b[D4],b[E4],b[F4],b[G4],b[H4]);
+    value += eval_pattern(array + straight_4_start,b[A5],b[B5],b[C5],b[D5],b[E5],b[F5],b[G5],b[H5]);
+    value += eval_pattern(array + straight_3_start,b[A6],b[B6],b[C6],b[D6],b[E6],b[F6],b[G6],b[H6]);
+    value += eval_pattern(array + straight_2_start,b[A7],b[B7],b[C7],b[D7],b[E7],b[F7],b[G7],b[H7]);
+    value += eval_pattern(array + straight_1_start,b[A8],b[B8],b[C8],b[D8],b[E8],b[F8],b[G8],b[H8]);
+
+    value += eval_pattern(array + diagonall_8_start,b[A1],b[B2],b[C3],b[D4],b[E5],b[F6],b[G7],b[H8]);
+
+    value += eval_pattern(array + diagonall_7_start,b[A2],b[B3],b[C4],b[D5],b[E6],b[F7],b[G8],0);
+    value += eval_pattern(array + diagonall_6_start,b[A3],b[B4],b[C5],b[D6],b[E7],b[F8],0,0);
+    value += eval_pattern(array + diagonall_5_start,b[A4],b[B5],b[C6],b[D7],b[E8],0,0,0);
+    value += eval_pattern(array + diagonall_4_start,b[A5],b[B6],b[C7],b[D8],0,0,0,0);
+    value += eval_pattern(array + diagonall_321_start,b[A6],b[B7],b[C8],b[A7],b[B8],b[A8],0,0);
+
+    value += eval_pattern(array + diagonall_7_start,b[B1],b[C2],b[D3],b[E4],b[F5],b[G6],b[H7],0);
+    value += eval_pattern(array + diagonall_6_start,b[C1],b[D2],b[E3],b[F4],b[G5],b[H6],0,0);
+    value += eval_pattern(array + diagonall_5_start,b[D1],b[E2],b[F3],b[G4],b[H5],0,0,0);
+    value += eval_pattern(array + diagonall_4_start,b[E1],b[F2],b[G3],b[H4],0,0,0,0);
+    value += eval_pattern(array + diagonall_321_start,b[F1],b[G2],b[H3],b[G1],b[H2],b[H1],0,0);
+    
+    value += eval_pattern(array + diagonall_8_start,b[A8],b[B7],b[C6],b[D5],b[E4],b[F3],b[G2],b[H1]);
+
+    value += eval_pattern(array + diagonall_7_start,b[A7],b[B6],b[C5],b[D4],b[E3],b[F2],b[G1],0);
+    value += eval_pattern(array + diagonall_6_start,b[A6],b[B5],b[C4],b[D3],b[E2],b[F1],0,0);
+    value += eval_pattern(array + diagonall_5_start,b[A5],b[B4],b[C3],b[D2],b[E1],0,0,0);
+    value += eval_pattern(array + diagonall_4_start,b[A4],b[B3],b[C2],b[D1],0,0,0,0);
+    value += eval_pattern(array + diagonall_321_start,b[A3],b[B2],b[C1],b[A2],b[B1],b[A1],0,0);
+
+    value += eval_pattern(array + diagonall_7_start,b[B8],b[C7],b[D6],b[E5],b[F4],b[G3],b[H2],0);
+    value += eval_pattern(array + diagonall_6_start,b[C8],b[D7],b[E6],b[F5],b[G4],b[H3],0,0);
+    value += eval_pattern(array + diagonall_5_start,b[D8],b[E7],b[F6],b[G5],b[H4],0,0,0);
+    value += eval_pattern(array + diagonall_4_start,b[E8],b[F7],b[G6],b[H5],0,0,0,0);
+    value += eval_pattern(array + diagonall_321_start,b[F8],b[G7],b[H6],b[G8],b[H7],b[H8],0,0);
+
+    return value;
 }
 
 int32 learn_position(uint64 my,uint64 opp,int32 v_prime){
@@ -362,168 +130,61 @@ int32 learn_position(uint64 my,uint64 opp,int32 v_prime){
     int count = bit_count(my) + bit_count(opp);
     int book_number = ( count - 4 ) / BOOK_DEEPTH ;
 
-    uint8 left,right;
-    uint16 pattern_3, pattern_2, pattern_1;
+    int8 b[64];
 
-    // horizontal
+    for( int8 i = 0 ; i < 64 ; i ++){
+        b[i] = ( my & 1ull ) + ( ( opp & 1ull ) << 1 ) ;
+        my = my >> 1;
+        opp = opp >> 1;
+    }
 
-    left  = pattern_horizontal(my, 7*8);
-    right = pattern_horizontal(opp, 7*8);
-    learn_pattern(left,right,8,eval_array_straight_1[book_number],diff);
+    int16 *array = eval_array[book_number];
+    
+    update_pattern(array + straight_1_start,b[A1],b[A2],b[A3],b[A4],b[A5],b[A6],b[A7],b[A8],diff);
+    update_pattern(array + straight_2_start,b[B1],b[B2],b[B3],b[B4],b[B5],b[B6],b[B7],b[B8],diff);
+    update_pattern(array + straight_3_start,b[C1],b[C2],b[C3],b[C4],b[C5],b[C6],b[C7],b[C8],diff);
+    update_pattern(array + straight_4_start,b[D1],b[D2],b[D3],b[D4],b[D5],b[D6],b[D7],b[D8],diff);
+    update_pattern(array + straight_4_start,b[E1],b[E2],b[E3],b[E4],b[E5],b[E6],b[E7],b[E8],diff);
+    update_pattern(array + straight_3_start,b[F1],b[F2],b[F3],b[F4],b[F5],b[F6],b[F7],b[F8],diff);
+    update_pattern(array + straight_2_start,b[G1],b[G2],b[G3],b[G4],b[G5],b[G6],b[G7],b[G8],diff);
+    update_pattern(array + straight_1_start,b[H1],b[H2],b[H3],b[H4],b[H5],b[H6],b[H7],b[H8],diff);
 
-    left  = pattern_horizontal(my, 6*8);
-    right = pattern_horizontal(opp, 6*8);
-    learn_pattern(left,right,8,eval_array_straight_2[book_number],diff);
+    update_pattern(array + straight_1_start,b[A1],b[B1],b[C1],b[D1],b[E1],b[F1],b[G1],b[H1],diff);
+    update_pattern(array + straight_2_start,b[A2],b[B2],b[C2],b[D2],b[E2],b[F2],b[G2],b[H2],diff);
+    update_pattern(array + straight_3_start,b[A3],b[B3],b[C3],b[D3],b[E3],b[F3],b[G3],b[H3],diff);
+    update_pattern(array + straight_4_start,b[A4],b[B4],b[C4],b[D4],b[E4],b[F4],b[G4],b[H4],diff);
+    update_pattern(array + straight_4_start,b[A5],b[B5],b[C5],b[D5],b[E5],b[F5],b[G5],b[H5],diff);
+    update_pattern(array + straight_3_start,b[A6],b[B6],b[C6],b[D6],b[E6],b[F6],b[G6],b[H6],diff);
+    update_pattern(array + straight_2_start,b[A7],b[B7],b[C7],b[D7],b[E7],b[F7],b[G7],b[H7],diff);
+    update_pattern(array + straight_1_start,b[A8],b[B8],b[C8],b[D8],b[E8],b[F8],b[G8],b[H8],diff);
 
-    left  = pattern_horizontal(my, 5*8);
-    right = pattern_horizontal(opp, 5*8);
-    learn_pattern(left,right,8,eval_array_straight_3[book_number],diff);
+    update_pattern(array + diagonall_8_start,b[A1],b[B2],b[C3],b[D4],b[E5],b[F6],b[G7],b[H8],diff);
 
-    left  = pattern_horizontal(my, 4*8);
-    right = pattern_horizontal(opp, 4*8);
-    learn_pattern(left,right,8,eval_array_straight_4[book_number],diff);
+    update_pattern(array + diagonall_7_start,b[A2],b[B3],b[C4],b[D5],b[E6],b[F7],b[G8],0,diff);
+    update_pattern(array + diagonall_6_start,b[A3],b[B4],b[C5],b[D6],b[E7],b[F8],0,0,diff);
+    update_pattern(array + diagonall_5_start,b[A4],b[B5],b[C6],b[D7],b[E8],0,0,0,diff);
+    update_pattern(array + diagonall_4_start,b[A5],b[B6],b[C7],b[D8],0,0,0,0,diff);
+    update_pattern(array + diagonall_321_start,b[A6],b[B7],b[C8],b[A7],b[B8],b[A8],0,0,diff);
 
-    left  = pattern_horizontal(my, 3*8);
-    right = pattern_horizontal(opp, 3*8);
-    learn_pattern(left,right,8,eval_array_straight_4[book_number],diff);
+    update_pattern(array + diagonall_7_start,b[B1],b[C2],b[D3],b[E4],b[F5],b[G6],b[H7],0,diff);
+    update_pattern(array + diagonall_6_start,b[C1],b[D2],b[E3],b[F4],b[G5],b[H6],0,0,diff);
+    update_pattern(array + diagonall_5_start,b[D1],b[E2],b[F3],b[G4],b[H5],0,0,0,diff);
+    update_pattern(array + diagonall_4_start,b[E1],b[F2],b[G3],b[H4],0,0,0,0,diff);
+    update_pattern(array + diagonall_321_start,b[F1],b[G2],b[H3],b[G1],b[H2],b[H1],0,0,diff);
+    
+    update_pattern(array + diagonall_8_start,b[A8],b[B7],b[C6],b[D5],b[E4],b[F3],b[G2],b[H1],diff);
 
-    left  = pattern_horizontal(my, 2*8);
-    right = pattern_horizontal(opp, 2*8);
-    learn_pattern(left,right,8,eval_array_straight_3[book_number],diff);
+    update_pattern(array + diagonall_7_start,b[A7],b[B6],b[C5],b[D4],b[E3],b[F2],b[G1],0,diff);
+    update_pattern(array + diagonall_6_start,b[A6],b[B5],b[C4],b[D3],b[E2],b[F1],0,0,diff);
+    update_pattern(array + diagonall_5_start,b[A5],b[B4],b[C3],b[D2],b[E1],0,0,0,diff);
+    update_pattern(array + diagonall_4_start,b[A4],b[B3],b[C2],b[D1],0,0,0,0,diff);
+    update_pattern(array + diagonall_321_start,b[A3],b[B2],b[C1],b[A2],b[B1],b[A1],0,0,diff);
 
-    left  = pattern_horizontal(my, 1*8);
-    right = pattern_horizontal(opp, 1*8);
-    learn_pattern(left,right,8,eval_array_straight_2[book_number],diff);
-
-    left  = pattern_horizontal(my, 0*8);
-    right = pattern_horizontal(opp, 0*8);
-    learn_pattern(left,right,8,eval_array_straight_1[book_number],diff);
-
-    // vertical 
-
-    left  = pattern_vertical(my, 7);
-    right = pattern_vertical(opp, 7);
-    learn_pattern(left,right,8,eval_array_straight_1[book_number],diff);
-
-    left  = pattern_vertical(my, 6);
-    right = pattern_vertical(opp, 6);
-    learn_pattern(left,right,8,eval_array_straight_2[book_number],diff);
-
-    left  = pattern_vertical(my, 5);
-    right = pattern_vertical(opp, 5);
-    learn_pattern(left,right,8,eval_array_straight_3[book_number],diff);
-
-    left  = pattern_vertical(my, 4);
-    right = pattern_vertical(opp, 4);
-    learn_pattern(left,right,8,eval_array_straight_4[book_number],diff);
-
-    left  = pattern_vertical(my, 3);
-    right = pattern_vertical(opp, 3);
-    learn_pattern(left,right,8,eval_array_straight_4[book_number],diff);
-
-    left  = pattern_vertical(my, 2);
-    right = pattern_vertical(opp, 2);
-    learn_pattern(left,right,8,eval_array_straight_3[book_number],diff);
-
-    left  = pattern_vertical(my, 1);
-    right = pattern_vertical(opp, 1);
-    learn_pattern(left,right,8,eval_array_straight_2[book_number],diff);
-
-    left  = pattern_vertical(my, 0);
-    right = pattern_vertical(opp, 0);
-    learn_pattern(left,right,8,eval_array_straight_1[book_number],diff);
-
-    // diagonall lt2rb
-
-    left  = pattern_diagonal_lt2rb_l(my, 0);
-    right = pattern_diagonal_lt2rb_l(opp, 0);
-    learn_pattern(left,right,8,eval_array_diagonall_8[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_l(my, 1);
-    right = pattern_diagonal_lt2rb_l(opp, 1);
-    learn_pattern(left,right,7,eval_array_diagonall_7[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_r(my, 1);
-    right = pattern_diagonal_lt2rb_r(opp, 1);
-    learn_pattern(left,right,7,eval_array_diagonall_7[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_l(my, 2);
-    right = pattern_diagonal_lt2rb_l(opp, 2);
-    learn_pattern(left,right,6,eval_array_diagonall_6[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_r(my, 2);
-    right = pattern_diagonal_lt2rb_r(opp, 2);
-    learn_pattern(left,right,6,eval_array_diagonall_6[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_l(my, 3);
-    right = pattern_diagonal_lt2rb_l(opp, 3);
-    learn_pattern(left,right,5,eval_array_diagonall_5[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_r(my, 3);
-    right = pattern_diagonal_lt2rb_r(opp, 3);
-    learn_pattern(left,right,5,eval_array_diagonall_5[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_l(my, 4);
-    right = pattern_diagonal_lt2rb_l(opp, 4);
-    learn_pattern(left,right,4,eval_array_diagonall_4[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_r(my, 4);
-    right = pattern_diagonal_lt2rb_r(opp, 4);
-    learn_pattern(left,right,4,eval_array_diagonall_4[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_l_321(my);
-    right = pattern_diagonal_lt2rb_l_321(opp);
-    learn_pattern(left,right,4,eval_array_diagonall_321[book_number],diff);
-
-    left  = pattern_diagonal_lt2rb_r_321(my);
-    right = pattern_diagonal_lt2rb_r_321(opp);
-    learn_pattern(left,right,4,eval_array_diagonall_321[book_number],diff);
-
-    // diagonall rt2lb
-
-    left  = pattern_diagonal_rt2lb_l(my, 0);
-    right = pattern_diagonal_rt2lb_l(opp, 0);
-    learn_pattern(left,right,8,eval_array_diagonall_8[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_l(my, 1);
-    right = pattern_diagonal_rt2lb_l(opp, 1);
-    learn_pattern(left,right,7,eval_array_diagonall_7[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_r(my, 1);
-    right = pattern_diagonal_rt2lb_r(opp, 1);
-    learn_pattern(left,right,7,eval_array_diagonall_7[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_l(my, 2);
-    right = pattern_diagonal_rt2lb_l(opp, 2);
-    learn_pattern(left,right,6,eval_array_diagonall_6[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_r(my, 2);
-    right = pattern_diagonal_rt2lb_r(opp, 2);
-    learn_pattern(left,right,6,eval_array_diagonall_6[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_l(my, 3);
-    right = pattern_diagonal_rt2lb_l(opp, 3);
-    learn_pattern(left,right,5,eval_array_diagonall_5[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_r(my, 3);
-    right = pattern_diagonal_rt2lb_r(opp, 3);
-    learn_pattern(left,right,5,eval_array_diagonall_5[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_l(my, 4);
-    right = pattern_diagonal_rt2lb_l(opp, 4);
-    learn_pattern(left,right,4,eval_array_diagonall_4[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_r(my, 4);
-    right = pattern_diagonal_rt2lb_r(opp, 4);
-    learn_pattern(left,right,4,eval_array_diagonall_4[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_l_321(my);
-    right = pattern_diagonal_rt2lb_l_321(opp);
-    learn_pattern(left,right,4,eval_array_diagonall_321[book_number],diff);
-
-    left  = pattern_diagonal_rt2lb_r_321(my);
-    right = pattern_diagonal_rt2lb_r_321(opp);
-    learn_pattern(left,right,4,eval_array_diagonall_321[book_number],diff);
+    update_pattern(array + diagonall_7_start,b[B8],b[C7],b[D6],b[E5],b[F4],b[G3],b[H2],0,diff);
+    update_pattern(array + diagonall_6_start,b[C8],b[D7],b[E6],b[F5],b[G4],b[H3],0,0,diff);
+    update_pattern(array + diagonall_5_start,b[D8],b[E7],b[F6],b[G5],b[H4],0,0,0,diff);
+    update_pattern(array + diagonall_4_start,b[E8],b[F7],b[G6],b[H5],0,0,0,0,diff);
+    update_pattern(array + diagonall_321_start,b[F8],b[G7],b[H6],b[G8],b[H7],b[H8],0,0,diff);
 
     return v_prime - v ;
 
@@ -531,62 +192,20 @@ int32 learn_position(uint64 my,uint64 opp,int32 v_prime){
 
 void init_eval(char *array){
     int16 *data = (int16*)array;
+
     for(int32 book_number = 0 ; book_number < BOOK_NUMBER ; book_number ++){
-        int32 start;
-
-        start = book_number * one_book_total_number + straight_1_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            update_value(i, 8, eval_array_straight_1[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + straight_2_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            update_value(i, 8, eval_array_straight_2[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + straight_3_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            update_value(i, 8, eval_array_straight_3[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + straight_4_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            update_value(i, 8, eval_array_straight_4[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_8_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            update_value(i, 8, eval_array_diagonall_8[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_7_start;
-        for(int32 i = 0 ; i < 2187 ; i ++){
-            update_value(i, 7, eval_array_diagonall_7[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_6_start;
-        for(int32 i = 0 ; i < 729 ; i ++){
-            update_value(i, 6, eval_array_diagonall_6[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_5_start;
-        for(int32 i = 0 ; i < 243 ; i ++){
-            update_value(i, 5, eval_array_diagonall_5[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_4_start;
-        for(int32 i = 0 ; i < 81 ; i ++){
-            update_value(i, 4, eval_array_diagonall_4[book_number], data[ start + i ]);
-        }
-
-        start = book_number * one_book_total_number + diagonall_321_start;
-        for(int32 i = 0 ; i < 729 ; i ++){
-            update_value(i, 6, eval_array_diagonall_321[book_number], data[ start + i ]);
+        for(int32 i = 0 ; i < one_book_total_number ; i ++){
+            eval_array[book_number][i] = data[ book_number * one_book_total_number + i ];
         }
     }
 }
 
 void load_eval(){
+    for(int32 book_number = 0 ; book_number < BOOK_NUMBER ; book_number ++){
+        for(int32 i = 0 ; i < one_book_total_number ; i ++){
+            eval_array[book_number][i] = 0;
+        }
+    }
     FILE *fin=fopen("model.bin","rb");
     if(fin) {
         char *data;
@@ -606,76 +225,12 @@ void load_eval(){
     }
 }
 
-void save_value(int32 i, int8 offset, int16 *array, int16 *value){
-    uint8 left,right;
-    power_3_number_to_pattern(i,&left,&right);
-    uint16 pattern = ( (uint16)left << 8 ) | (uint16)right;
-
-    left = reverse_bit(left);
-    right = reverse_bit(right);
-    uint16 pattern_prime = ( (uint16)left << 8 ) | (uint16)right;
-    if(pattern >= pattern_prime){
-        (*value) = array[pattern];
-    }
-}
-
 void save_eval(){
     int16 data[ BOOK_NUMBER * one_book_total_number ];
-    for( int32 i = 0 ; i < BOOK_NUMBER * one_book_total_number ; i ++ ){
-        data[i] = 0;
-    }
 
     for(int32 book_number = 0 ; book_number < BOOK_NUMBER ; book_number ++){
-        int32 start;
-
-        start = book_number * one_book_total_number + straight_1_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            save_value( i, 8, eval_array_straight_1[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + straight_2_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            save_value( i, 8, eval_array_straight_2[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + straight_3_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            save_value( i, 8, eval_array_straight_3[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + straight_4_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            save_value( i, 8, eval_array_straight_4[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_8_start;
-        for(int32 i = 0 ; i < 6561 ; i ++){
-            save_value( i, 8, eval_array_diagonall_8[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_7_start;
-        for(int32 i = 0 ; i < 2187 ; i ++){
-            save_value( i, 7, eval_array_diagonall_7[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_6_start;
-        for(int32 i = 0 ; i < 729 ; i ++){
-            save_value( i, 6, eval_array_diagonall_6[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_5_start;
-        for(int32 i = 0 ; i < 243 ; i ++){
-            save_value( i, 5, eval_array_diagonall_5[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_4_start;
-        for(int32 i = 0 ; i < 81 ; i ++){
-            save_value( i, 4, eval_array_diagonall_4[book_number], &data[start + i] );
-        }
-
-        start = book_number * one_book_total_number + diagonall_321_start;
-        for(int32 i = 0 ; i < 729 ; i ++){
-            save_value( i, 6, eval_array_diagonall_321[book_number], &data[start + i] );
+        for(int32 i = 0 ; i < one_book_total_number ; i ++){
+            data[ book_number * one_book_total_number + i ] = eval_array[book_number][i];
         }
     }
 
