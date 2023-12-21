@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef char				i8;
 typedef unsigned char		u8;
@@ -40,6 +41,14 @@ u16 to_dict_bin_7[1<<14];
 u16 to_dict_bin_8[1<<16];
 u16 to_dict_bin_left[1<<12];
 
+u8 bit_count(u64 x){
+	return __builtin_popcountll(x);
+}
+
+u8 bit_to_x(u64 x){
+	return __builtin_ctzll(x);
+}
+
 struct BookForLearn{
     f32 line1[BOOK_PARA_NUM_8];
     f32 line2[BOOK_PARA_NUM_8];
@@ -51,41 +60,61 @@ struct BookForLearn{
     f32 diag5[BOOK_PARA_NUM_5];
     f32 diag4[BOOK_PARA_NUM_4];
     f32 diagl[BOOK_PARA_NUM_LEFT];
-    u64 line1_cnt[BOOK_PARA_NUM_8];
-    u64 line2_cnt[BOOK_PARA_NUM_8];
-    u64 line3_cnt[BOOK_PARA_NUM_8];
-    u64 line4_cnt[BOOK_PARA_NUM_8];
-    u64 diag8_cnt[BOOK_PARA_NUM_8];
-    u64 diag7_cnt[BOOK_PARA_NUM_7];
-    u64 diag6_cnt[BOOK_PARA_NUM_6];
-    u64 diag5_cnt[BOOK_PARA_NUM_5];
-    u64 diag4_cnt[BOOK_PARA_NUM_4];
-    u64 diagl_cnt[BOOK_PARA_NUM_LEFT];
+    u32 line1_cnt[BOOK_PARA_NUM_8];
+    u32 line2_cnt[BOOK_PARA_NUM_8];
+    u32 line3_cnt[BOOK_PARA_NUM_8];
+    u32 line4_cnt[BOOK_PARA_NUM_8];
+    u32 diag8_cnt[BOOK_PARA_NUM_8];
+    u32 diag7_cnt[BOOK_PARA_NUM_7];
+    u32 diag6_cnt[BOOK_PARA_NUM_6];
+    u32 diag5_cnt[BOOK_PARA_NUM_5];
+    u32 diag4_cnt[BOOK_PARA_NUM_4];
+    u32 diagl_cnt[BOOK_PARA_NUM_LEFT];
 };
 
 struct BookForLearn books[15];
 
 f32 random_f32(){
-    return (rand()%2000 - 1000)/1000.0;
+    return (rand()%1000 - 500)/1000.0;
+}
+
+void init_book_for_learn_cnt(struct BookForLearn *book){
+    for(i16 i=0;i<(sizeof book->line1)/4;i++) book->line1_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->line2)/4;i++) book->line2_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->line3)/4;i++) book->line3_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->line4)/4;i++) book->line4_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diag8)/4;i++) book->diag8_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diag7)/4;i++) book->diag7_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diag6)/4;i++) book->diag6_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diag5)/4;i++) book->diag5_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diag4)/4;i++) book->diag4_cnt[i]=0;
+    for(i16 i=0;i<(sizeof book->diagl)/4;i++) book->diagl_cnt[i]=0;
 }
 
 void init_book_for_learn(struct BookForLearn *book){
-    srand(1);
-    for(i16 i=0;i<(sizeof book->line1)/4;i++){book->line1[i]=random_f32();book->line1_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->line2)/4;i++){book->line2[i]=random_f32();book->line2_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->line3)/4;i++){book->line3[i]=random_f32();book->line3_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->line4)/4;i++){book->line4[i]=random_f32();book->line4_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diag8)/4;i++){book->diag8[i]=random_f32();book->diag8_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diag7)/4;i++){book->diag7[i]=random_f32();book->diag7_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diag6)/4;i++){book->diag6[i]=random_f32();book->diag6_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diag5)/4;i++){book->diag5[i]=random_f32();book->diag5_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diag4)/4;i++){book->diag4[i]=random_f32();book->diag4_cnt[i]=0;}
-    for(i16 i=0;i<(sizeof book->diagl)/4;i++){book->diagl[i]=random_f32();book->diagl_cnt[i]=0;}
+    for(i16 i=0;i<(sizeof book->line1)/4;i++) book->line1[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->line2)/4;i++) book->line2[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->line3)/4;i++) book->line3[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->line4)/4;i++) book->line4[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diag8)/4;i++) book->diag8[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diag7)/4;i++) book->diag7[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diag6)/4;i++) book->diag6[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diag5)/4;i++) book->diag5[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diag4)/4;i++) book->diag4[i]=random_f32();
+    for(i16 i=0;i<(sizeof book->diagl)/4;i++) book->diagl[i]=random_f32();
+}
+
+void init_books_for_learn_cnt(){
+    for(i16 i=0;i<BOOK_IN_BOOKS_CNT;i++){
+        init_book_for_learn_cnt(&books[i]);
+    }
 }
 
 void init_books_for_learn(){
+    srand(4);
     for(i16 i=0;i<BOOK_IN_BOOKS_CNT;i++){
         init_book_for_learn(&books[i]);
+        init_book_for_learn_cnt(&books[i]);
     }
 }
 
@@ -101,16 +130,16 @@ void save_book_for_learn(FILE *fout,struct BookForLearn *book){
     fwrite(book->diag4,4,(sizeof book->diag4)/4,fout);
     fwrite(book->diagl,4,(sizeof book->diagl)/4,fout);
 
-    fwrite(book->line1_cnt,8,(sizeof book->line1_cnt)/8,fout);
-    fwrite(book->line2_cnt,8,(sizeof book->line2_cnt)/8,fout);
-    fwrite(book->line3_cnt,8,(sizeof book->line3_cnt)/8,fout);
-    fwrite(book->line4_cnt,8,(sizeof book->line4_cnt)/8,fout);
-    fwrite(book->diag8_cnt,8,(sizeof book->diag8_cnt)/8,fout);
-    fwrite(book->diag7_cnt,8,(sizeof book->diag7_cnt)/8,fout);
-    fwrite(book->diag6_cnt,8,(sizeof book->diag6_cnt)/8,fout);
-    fwrite(book->diag5_cnt,8,(sizeof book->diag5_cnt)/8,fout);
-    fwrite(book->diag4_cnt,8,(sizeof book->diag4_cnt)/8,fout);
-    fwrite(book->diagl_cnt,8,(sizeof book->diagl_cnt)/8,fout);
+    fwrite(book->line1_cnt,4,(sizeof book->line1_cnt)/4,fout);
+    fwrite(book->line2_cnt,4,(sizeof book->line2_cnt)/4,fout);
+    fwrite(book->line3_cnt,4,(sizeof book->line3_cnt)/4,fout);
+    fwrite(book->line4_cnt,4,(sizeof book->line4_cnt)/4,fout);
+    fwrite(book->diag8_cnt,4,(sizeof book->diag8_cnt)/4,fout);
+    fwrite(book->diag7_cnt,4,(sizeof book->diag7_cnt)/4,fout);
+    fwrite(book->diag6_cnt,4,(sizeof book->diag6_cnt)/4,fout);
+    fwrite(book->diag5_cnt,4,(sizeof book->diag5_cnt)/4,fout);
+    fwrite(book->diag4_cnt,4,(sizeof book->diag4_cnt)/4,fout);
+    fwrite(book->diagl_cnt,4,(sizeof book->diagl_cnt)/4,fout);
 }
 
 void save_books_for_learn(){
@@ -133,16 +162,16 @@ void read_book_for_learn(FILE *fin,struct BookForLearn *book){
     fread(book->diag4,4,BOOK_PARA_NUM_4,fin);
     fread(book->diagl,4,BOOK_PARA_NUM_LEFT,fin);
     
-    fread(book->line1_cnt,8,BOOK_PARA_NUM_8,fin);
-    fread(book->line2_cnt,8,BOOK_PARA_NUM_8,fin);
-    fread(book->line3_cnt,8,BOOK_PARA_NUM_8,fin);
-    fread(book->line4_cnt,8,BOOK_PARA_NUM_8,fin);
-    fread(book->diag8_cnt,8,BOOK_PARA_NUM_8,fin);
-    fread(book->diag7_cnt,8,BOOK_PARA_NUM_7,fin);
-    fread(book->diag6_cnt,8,BOOK_PARA_NUM_6,fin);
-    fread(book->diag5_cnt,8,BOOK_PARA_NUM_5,fin);
-    fread(book->diag4_cnt,8,BOOK_PARA_NUM_4,fin);
-    fread(book->diagl_cnt,8,BOOK_PARA_NUM_LEFT,fin);
+    fread(book->line1_cnt,4,BOOK_PARA_NUM_8,fin);
+    fread(book->line2_cnt,4,BOOK_PARA_NUM_8,fin);
+    fread(book->line3_cnt,4,BOOK_PARA_NUM_8,fin);
+    fread(book->line4_cnt,4,BOOK_PARA_NUM_8,fin);
+    fread(book->diag8_cnt,4,BOOK_PARA_NUM_8,fin);
+    fread(book->diag7_cnt,4,BOOK_PARA_NUM_7,fin);
+    fread(book->diag6_cnt,4,BOOK_PARA_NUM_6,fin);
+    fread(book->diag5_cnt,4,BOOK_PARA_NUM_5,fin);
+    fread(book->diag4_cnt,4,BOOK_PARA_NUM_4,fin);
+    fread(book->diagl_cnt,4,BOOK_PARA_NUM_LEFT,fin);
 }
 
 void read_books_for_learn(){
@@ -413,10 +442,112 @@ f32 eval_board(u64 my,u64 opp,u16 space){
     return score;
 }
 
+f32 learn_rate(u32 cnt){
+    // diff * alpha * min(1,log(1000/x+1.02)/log(cnt))
+    f64 alpha = 0.01;
+    f64 temp = log(1000/cnt+1.02)/log(cnt);
+    if(temp>1.0) temp = 1.0;
+    return alpha * temp;
+}
+
+void learn_board(u64 my,u64 opp,f32 score){
+    u8 space = 64 - bit_count(my) - bit_count(opp);
+    f32 current_score = eval_board(my,opp,space);
+    f32 diff = score - current_score;
+    struct BookForLearn *book = &books[space/4];
+
+    u32 cnt = 0;
+
+    cnt = book->line1_cnt[to_dict_bin_8[pattern[0]]]++;
+    book->line1[to_dict_bin_8[pattern[0]]] += diff * learn_rate(cnt);
+    cnt = book->line2_cnt[to_dict_bin_8[pattern[1]]]++;
+    book->line2[to_dict_bin_8[pattern[1]]] += diff * learn_rate(cnt);
+    cnt = book->line3_cnt[to_dict_bin_8[pattern[2]]]++;
+    book->line3[to_dict_bin_8[pattern[2]]] += diff * learn_rate(cnt);
+    cnt = book->line4_cnt[to_dict_bin_8[pattern[3]]]++;
+    book->line4[to_dict_bin_8[pattern[3]]] += diff * learn_rate(cnt);
+    cnt = book->line4_cnt[to_dict_bin_8[pattern[4]]]++;
+    book->line4[to_dict_bin_8[pattern[4]]] += diff * learn_rate(cnt);
+    cnt = book->line3_cnt[to_dict_bin_8[pattern[5]]]++;
+    book->line3[to_dict_bin_8[pattern[5]]] += diff * learn_rate(cnt);
+    cnt = book->line2_cnt[to_dict_bin_8[pattern[6]]]++;
+    book->line2[to_dict_bin_8[pattern[6]]] += diff * learn_rate(cnt);
+    cnt = book->line1_cnt[to_dict_bin_8[pattern[7]]]++;
+    book->line1[to_dict_bin_8[pattern[7]]] += diff * learn_rate(cnt);
+    
+    cnt = book->line1_cnt[to_dict_bin_8[pattern[8]]]++;
+    book->line1[to_dict_bin_8[pattern[8]]] += diff * learn_rate(cnt);
+    cnt = book->line2_cnt[to_dict_bin_8[pattern[9]]]++;
+    book->line2[to_dict_bin_8[pattern[9]]] += diff * learn_rate(cnt);
+    cnt = book->line3_cnt[to_dict_bin_8[pattern[10]]]++;
+    book->line3[to_dict_bin_8[pattern[10]]] += diff * learn_rate(cnt);
+    cnt = book->line4_cnt[to_dict_bin_8[pattern[11]]]++;
+    book->line4[to_dict_bin_8[pattern[11]]] += diff * learn_rate(cnt);
+    cnt = book->line4_cnt[to_dict_bin_8[pattern[12]]]++;
+    book->line4[to_dict_bin_8[pattern[12]]] += diff * learn_rate(cnt);
+    cnt = book->line3_cnt[to_dict_bin_8[pattern[13]]]++;
+    book->line3[to_dict_bin_8[pattern[13]]] += diff * learn_rate(cnt);
+    cnt = book->line2_cnt[to_dict_bin_8[pattern[14]]]++;
+    book->line2[to_dict_bin_8[pattern[14]]] += diff * learn_rate(cnt);
+    cnt = book->line1_cnt[to_dict_bin_8[pattern[15]]]++;
+    book->line1[to_dict_bin_8[pattern[15]]] += diff * learn_rate(cnt);
+
+    cnt = book->diag8_cnt[to_dict_bin_8[pattern[16]]]++;
+    book->diag8[to_dict_bin_8[pattern[16]]] += diff * learn_rate(cnt);
+    cnt = book->diag8_cnt[to_dict_bin_8[pattern[17]]]++;
+    book->diag8[to_dict_bin_8[pattern[17]]] += diff * learn_rate(cnt);
+
+    cnt = book->diag7_cnt[to_dict_bin_7[pattern[18]]]++;
+    book->diag7[to_dict_bin_7[pattern[18]]] += diff * learn_rate(cnt);
+    cnt = book->diag7_cnt[to_dict_bin_7[pattern[19]]]++;
+    book->diag7[to_dict_bin_7[pattern[19]]] += diff * learn_rate(cnt);
+    cnt = book->diag7_cnt[to_dict_bin_7[pattern[20]]]++;
+    book->diag7[to_dict_bin_7[pattern[20]]] += diff * learn_rate(cnt);
+    cnt = book->diag7_cnt[to_dict_bin_7[pattern[21]]]++;
+    book->diag7[to_dict_bin_7[pattern[21]]] += diff * learn_rate(cnt);
+
+    cnt = book->diag6_cnt[to_dict_bin_6[pattern[22]]]++;
+    book->diag6[to_dict_bin_6[pattern[22]]] += diff * learn_rate(cnt);
+    cnt = book->diag6_cnt[to_dict_bin_6[pattern[23]]]++;
+    book->diag6[to_dict_bin_6[pattern[23]]] += diff * learn_rate(cnt);
+    cnt = book->diag6_cnt[to_dict_bin_6[pattern[24]]]++;
+    book->diag6[to_dict_bin_6[pattern[24]]] += diff * learn_rate(cnt);
+    cnt = book->diag6_cnt[to_dict_bin_6[pattern[25]]]++;
+    book->diag6[to_dict_bin_6[pattern[25]]] += diff * learn_rate(cnt);
+
+    cnt = book->diag5_cnt[to_dict_bin_5[pattern[26]]]++;
+    book->diag5[to_dict_bin_5[pattern[26]]] += diff * learn_rate(cnt);
+    cnt = book->diag5_cnt[to_dict_bin_5[pattern[27]]]++;
+    book->diag5[to_dict_bin_5[pattern[27]]] += diff * learn_rate(cnt);
+    cnt = book->diag5_cnt[to_dict_bin_5[pattern[28]]]++;
+    book->diag5[to_dict_bin_5[pattern[28]]] += diff * learn_rate(cnt);
+    cnt = book->diag5_cnt[to_dict_bin_5[pattern[29]]]++;
+    book->diag5[to_dict_bin_5[pattern[29]]] += diff * learn_rate(cnt);
+
+    cnt = book->diag4_cnt[to_dict_bin_4[pattern[30]]]++;
+    book->diag4[to_dict_bin_4[pattern[30]]] += diff * learn_rate(cnt);
+    cnt = book->diag4_cnt[to_dict_bin_4[pattern[31]]]++;
+    book->diag4[to_dict_bin_4[pattern[31]]] += diff * learn_rate(cnt);
+    cnt = book->diag4_cnt[to_dict_bin_4[pattern[32]]]++;
+    book->diag4[to_dict_bin_4[pattern[32]]] += diff * learn_rate(cnt);
+    cnt = book->diag4_cnt[to_dict_bin_4[pattern[33]]]++;
+    book->diag4[to_dict_bin_4[pattern[33]]] += diff * learn_rate(cnt);
+
+    cnt = book->diagl_cnt[to_dict_bin_left[pattern[34]]]++;
+    book->diagl[to_dict_bin_left[pattern[34]]] += diff * learn_rate(cnt);
+    cnt = book->diagl_cnt[to_dict_bin_left[pattern[35]]]++;
+    book->diagl[to_dict_bin_left[pattern[35]]] += diff * learn_rate(cnt);
+    cnt = book->diagl_cnt[to_dict_bin_left[pattern[36]]]++;
+    book->diagl[to_dict_bin_left[pattern[36]]] += diff * learn_rate(cnt);
+    cnt = book->diagl_cnt[to_dict_bin_left[pattern[37]]]++;
+    book->diagl[to_dict_bin_left[pattern[37]]] += diff * learn_rate(cnt);
+}
+
 int main(){
-    init_books_for_learn();
-    save_books_for_learn();
+    //init_books_for_learn();
+    //save_books_for_learn();
     read_books_for_learn();
+    //init_books_for_learn_cnt();
     u64 a = 0x0101010101010101ull;
     u64 b = 0x0102040810204080ull;
     u64 c = a*b >> (64-8) ;
