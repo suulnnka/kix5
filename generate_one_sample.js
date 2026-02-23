@@ -3,49 +3,8 @@ import fs from 'fs';
 
 const Egaroucid_DEPTH = 12
 const Game_Per_File = 100
-const Loop_Number = 100
-const POOL_SIZE = 4
-
-class ProcessPool {
-    constructor(poolSize) {
-        this.poolSize = poolSize;
-        this.taskQueue = [];
-        this.workers = [];
-        this.activeWorkers = 0;
-    }
-
-    async runTask(taskFn) {
-        return new Promise((resolve, reject) => {
-            this.taskQueue.push({ taskFn, resolve, reject });
-            this.processQueue();
-        });
-    }
-
-    processQueue() {
-        while (this.activeWorkers < this.poolSize && this.taskQueue.length > 0) {
-            const { taskFn, resolve, reject } = this.taskQueue.shift();
-            this.activeWorkers++;
-            
-            taskFn()
-                .then(result => {
-                    resolve(result);
-                })
-                .catch(error => {
-                    reject(error);
-                })
-                .finally(() => {
-                    this.activeWorkers--;
-                    this.processQueue();
-                });
-        }
-    }
-
-    async waitAll() {
-        while (this.taskQueue.length > 0 || this.activeWorkers > 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-    }
-}
+const Total_Loop = 10000
+const PARALLELISM = 4
 
 const WHITE = 2
 const BLACK = 1
@@ -260,23 +219,30 @@ function get_time_string(){
     return result
 }
 
+
+let samples_list = []
+let current_loop = 0
+
 async function generate_samples(){
-    let samples_list = []
-    for(let i = 0 ; i < Game_Per_File ; i ++){
+    while(current_loop < Total_Loop){
+        current_loop ++
+        let loop = current_loop
         let start_time = Date.now()
-        let samples = await generate_value_sample_one_game()
+        let sample = await generate_value_sample_one_game()
         let end_time = Date.now()
-        samples_list.push(samples)
-        console.log(`Game ${i+1} completed, ${end_time - start_time} ms`);
+        samples_list.push(sample)
+        console.log(`Game ${loop} completed, ${end_time - start_time} ms`);
+        if(samples_list.length >= Game_Per_File){
+            let time = get_time_string()
+            fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${time}.txt`, JSON.stringify(samples_list,null,2))
+            console.log(`save ${samples_list.length} game to samples_depth_${Egaroucid_DEPTH}_${time}.txt`)
+            samples_list = []
+        }
     }
-    let time = get_time_string()
-    fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${time}.txt`, JSON.stringify(samples_list,null,2))
 }
 
-const main_pool = new ProcessPool(POOL_SIZE);
-for(let x = 1 ; x <= Loop_Number ; x++){
-    main_pool.runTask(() => generate_samples());
+let task_list = []
+for(let i = 0 ; i < PARALLELISM; i ++){
+    task_list.push(generate_samples())
 }
-main_pool.waitAll();
-
-
+Promise.all(task_list)
