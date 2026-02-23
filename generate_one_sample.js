@@ -1,9 +1,51 @@
 import { spawn } from 'child_process';
-import fs from 'fs'
+import fs from 'fs';
 
 const Egaroucid_DEPTH = 12
 const Game_Per_File = 100
-const Loop_Number = 10
+const Loop_Number = 100
+const POOL_SIZE = 4
+
+class ProcessPool {
+    constructor(poolSize) {
+        this.poolSize = poolSize;
+        this.taskQueue = [];
+        this.workers = [];
+        this.activeWorkers = 0;
+    }
+
+    async runTask(taskFn) {
+        return new Promise((resolve, reject) => {
+            this.taskQueue.push({ taskFn, resolve, reject });
+            this.processQueue();
+        });
+    }
+
+    processQueue() {
+        while (this.activeWorkers < this.poolSize && this.taskQueue.length > 0) {
+            const { taskFn, resolve, reject } = this.taskQueue.shift();
+            this.activeWorkers++;
+            
+            taskFn()
+                .then(result => {
+                    resolve(result);
+                })
+                .catch(error => {
+                    reject(error);
+                })
+                .finally(() => {
+                    this.activeWorkers--;
+                    this.processQueue();
+                });
+        }
+    }
+
+    async waitAll() {
+        while (this.taskQueue.length > 0 || this.activeWorkers > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+}
 
 const WHITE = 2
 const BLACK = 1
@@ -201,9 +243,24 @@ function generate_value_sample_one_game() {
 
 }
 
+let top_p = 0
+function get_time_string(){
+    const now = new Date();
+
+    const year = String(now.getFullYear()).slice(-2);  // 获取后两位年份
+    const month = String(now.getMonth() + 1).padStart(2, '0');  // 月份从0开始
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    top_p ++;
+    let str_top_p = top_p.toString().padStart(3, '0');
+    const result = `${day}${month}${year}_${hours}${minutes}${seconds}.${str_top_p}`;
+    return result
+}
+
 async function generate_samples(){
-    let top = fs.readFileSync('one_network/top.txt', 'utf8').trim()
-    top = parseInt(top) + 1
     let samples_list = []
     for(let i = 0 ; i < Game_Per_File ; i ++){
         let start_time = Date.now()
@@ -212,12 +269,14 @@ async function generate_samples(){
         samples_list.push(samples)
         console.log(`Game ${i+1} completed, ${end_time - start_time} ms`);
     }
-    fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, JSON.stringify(samples_list,null,2))
-    fs.writeFileSync('one_network/top.txt', top.toString())
+    let time = get_time_string()
+    fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${time}.txt`, JSON.stringify(samples_list,null,2))
 }
 
+const main_pool = new ProcessPool(POOL_SIZE);
 for(let x = 1 ; x <= Loop_Number ; x++){
-    await generate_samples()
+    main_pool.runTask(() => generate_samples());
 }
+main_pool.waitAll();
 
 
