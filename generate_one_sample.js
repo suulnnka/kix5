@@ -2,6 +2,8 @@ import { spawn } from 'child_process';
 import fs from 'fs'
 
 const Egaroucid_DEPTH = 12
+const Game_Per_File = 100
+const Loop_Number = 10
 
 const WHITE = 2
 const BLACK = 1
@@ -52,17 +54,59 @@ function color_to_char(color){
     return "."
 }
 
-function generate_sample(board, color, score){
-    // 这个score其实是反的,当前棋盘该黑棋下,但是对于白棋的得分是score
-    let sample = ""
+function draw_board(board){
+    let char_board = ""
     for(let x = 1 ; x <= 8 ; x++){
         for(let y = 1 ; y <= 8 ; y++){
             let move = d2_to_d1(x,y)
-            sample += color_to_char(board[move])
+            char_board += color_to_char(board[move])
         }
     }
-    sample += " " + color_to_char(color) + " " + score
+    return char_board
+}
+
+function generate_sample(board, color, moves, scores,last_move){
+    let char_board = draw_board(board)
+    let sample = {
+        board: char_board,
+        color: color_to_char(color),
+        moves: moves,
+        scores: scores,
+        last_move: last_move
+    }
+    
     return sample
+}
+
+function choose_move(moves, scores){
+    let list = []
+    for(let i = 0 ; i < moves.length ; i++){
+        list.push({
+            move: moves[i],
+            score: parseInt(scores[i])
+        })
+    }
+    list.sort((a, b) => {
+        return b.score - a.score
+    })
+
+    let best_score = list[0].score
+    list = list.filter((item) => item.score >= best_score - 6)
+
+    let min_score = list[list.length - 1].score
+    list.forEach((item) => {
+        item.score =  item.score - min_score + 1
+    })
+
+    let score_sum = list.reduce((acc, cur) => acc + cur.score, 0)
+    let random_number = Math.random() * score_sum
+    let current_score = 0
+    for(let i = 0 ; i < list.length ; i++){
+        current_score += list[i].score
+        if(current_score >= random_number){
+            return list[i].move
+        }
+    }
 }
 
 function generate_value_sample_one_game() {
@@ -79,6 +123,7 @@ function generate_value_sample_one_game() {
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 
     let samples = []
+    let last_move = ""
 
     const child = spawn('./Egaroucid/Egaroucid_for_Console_7_8_0_SIMD.exe', ["-l", Egaroucid_DEPTH.toString()], {
         stdio: ['pipe', 'pipe', 'pipe']
@@ -109,17 +154,10 @@ function generate_value_sample_one_game() {
             scores.push(elements[4].trim())
         }
 
-        for(let i = 0 ; i < moves.length ; i++){
-            let move = moves[i]
-            let score = scores[i]
-            let new_board = filp(board, move, color)
-            let sample = generate_sample(new_board, 3 - color, score)
-            samples.push(sample)
-        }
+        samples.push(generate_sample(board, color, moves, scores,last_move))
 
-        let random_number = Math.floor(Math.random() * moves.length)
-        let move = moves[random_number]
-        let score = scores[random_number]
+        let move = choose_move(moves, scores)
+        last_move = move
         board = filp(board, move, color)
 
         return move
@@ -151,7 +189,10 @@ function generate_value_sample_one_game() {
     return new Promise((resolve, reject) => {
         child.on('close', (code) => {
             if (code === 0) {
-                resolve(samples)
+                resolve({
+                    last_board: draw_board(board),
+                    moves:samples,
+                })
             } else {
                 reject(new Error(`Child process with exit code ${code}`))
             }
@@ -161,23 +202,21 @@ function generate_value_sample_one_game() {
 }
 
 async function generate_samples(){
-    let top = fs.readFileSync('value_network/top.txt', 'utf8').trim()
+    let top = fs.readFileSync('one_network/top.txt', 'utf8').trim()
     top = parseInt(top) + 1
-    let file = fs.createWriteStream(`value_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, {flags: 'a'});
-    for(let i = 0 ; i < 10 ; i ++){
+    let samples_list = []
+    for(let i = 0 ; i < Game_Per_File ; i ++){
         let start_time = Date.now()
         let samples = await generate_value_sample_one_game()
         let end_time = Date.now()
-        console.log(`Game ${i+1} completed, ${samples.length} samples written, ${end_time - start_time} ms`);
-        for(let sample of samples){
-            file.write(sample + "\n");
-        }
+        samples_list.push(samples)
+        console.log(`Game ${i+1} completed, ${end_time - start_time} ms`);
     }
-    file.end();
-    fs.writeFileSync('value_network/top.txt', top.toString())
+    fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, JSON.stringify(samples_list,null,2))
+    fs.writeFileSync('one_network/top.txt', top.toString())
 }
 
-for(let x = 1 ; x <= 100 ; x++){
+for(let x = 1 ; x <= Loop_Number ; x++){
     await generate_samples()
 }
 

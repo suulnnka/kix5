@@ -25,8 +25,8 @@ function generate_policy_sample(){
             '-sf',
             one_file_sample_number.toString(),
             first_random_move.toString(),
-            //'-t',
-            //'8'
+            '-t',
+            '14'
         ]
     );
 
