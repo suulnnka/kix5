@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import fs from 'fs'
 
 const Egaroucid_DEPTH = 12
 
@@ -63,7 +64,7 @@ function generate_sample(board, color, score){
     return sample
 }
 
-function one_game() {
+function generate_value_sample_one_game() {
     let board = [
         3, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -79,7 +80,7 @@ function one_game() {
     let samples = []
 
     const child = spawn('./Egaroucid/Egaroucid_for_Console_7_8_0_SIMD.exe', ["-l", Egaroucid_DEPTH.toString()], {
-        stdio: ['pipe', 'pipe', 'pipe'] // stdin 继承，out/err 管道化
+        stdio: ['pipe', 'pipe', 'pipe']
     });
 
     let text = ""
@@ -96,8 +97,6 @@ function one_game() {
         }else{
             color = BLACK
         }
-        //WHITE to move
-        //BLACK to move
         const lines = text.split("\n")
         let moves = []
         let scores = []
@@ -160,15 +159,13 @@ function one_game() {
 
 }
 
-import fs from 'fs'
-
 async function generate_samples(){
-    let top = fs.readFileSync('top.txt', 'utf8').trim()
+    let top = fs.readFileSync('value_network/top.txt', 'utf8').trim()
     top = parseInt(top) + 1
-    let file = fs.createWriteStream(`samples_depth_${Egaroucid_DEPTH}_${top}.txt`, {flags: 'a'});
+    let file = fs.createWriteStream(`value_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, {flags: 'a'});
     for(let i = 0 ; i < 10 ; i ++){
         let start_time = Date.now()
-        let samples = await one_game()
+        let samples = await generate_value_sample_one_game()
         let end_time = Date.now()
         console.log(`Game ${i+1} completed, ${samples.length} samples written, ${end_time - start_time} ms`);
         for(let sample of samples){
@@ -176,10 +173,10 @@ async function generate_samples(){
         }
     }
     file.end();
-    fs.writeFileSync('top.txt', top.toString())
+    fs.writeFileSync('value_network/top.txt', top.toString())
 }
 
-for(let x = 3 ; x <= 20 ; x++){
+for(let x = 1 ; x <= 100 ; x++){
     await generate_samples()
 }
 

@@ -1,3 +1,4 @@
 Egaroucid/
-samples_depth_*.txt
-top.txt
+value_network/*.txt
+policy_network/*.txt
+
