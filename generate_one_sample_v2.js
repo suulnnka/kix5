@@ -192,7 +192,7 @@ function new_client(){
     let last_move = ""
     let samples = []
 
-    const child = spawn('./Egaroucid/Egaroucid_for_Console_7_8_0_AVX512.exe', ["-l", Egaroucid_DEPTH.toString()], {
+    const child = spawn('./Egaroucid/Egaroucid_for_Console_7_8_0_SIMD.exe', ["-l", Egaroucid_DEPTH.toString()], {
         stdio: ['pipe', 'pipe', 'pipe']
     });
 
