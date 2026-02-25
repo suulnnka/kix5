@@ -1,10 +1,16 @@
 Egaroucid/
-value_network/*.txt
-policy_network/*.txt
-one_network/*.txt
+
 Egaroucid_Train_Data.zip
 Egaroucid_Train_Data/
+
+data_value/*.txt
+data_policy/*.txt
+data_one/*.txt
 
 *.tar.gz
 *.zip
 *.7z
+
+**/__pycache__/
+
+*.pth
