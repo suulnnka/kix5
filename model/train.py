@@ -8,9 +8,11 @@ import time
 import argparse
 
 
-NUM_EPOCHS_TIMES = 5
-BATCH_SIZE = 8192 * 4
-USE_CUDA = True
+MODEL_CLASS = 'cnn'
+NUM_EPOCHS_TIMES = 20
+NUM_BATCHES_PER_EPOCH = 4
+BATCH_SIZE = 2048
+USE_CUDA = False
 
 
 def get_device():
@@ -116,11 +118,8 @@ class OthelloDatasetTxt(Dataset):
         return board, torch.tensor([value], dtype=torch.float32)
 
 
-MODEL_CLASS = 'fcn'
-
 def train(model_class=None):
     if model_class is None:
-        # load class from MODEL_CLASS
         model_class = __import__(MODEL_CLASS).ValueNet
 
     data_dir = preprocess_data()
@@ -141,13 +140,17 @@ def train(model_class=None):
     total_batches = len(npz_files)
     print(f"总共有 {total_batches} 个训练批次")
 
-    for batch_idx in range(total_batches):
-        print(f"\n=== 训练批次 {batch_idx + 1}/{total_batches} ===")
+    for epoch in range(NUM_EPOCHS_TIMES):
+        print(f"\n=== 第 {epoch + 1}/{NUM_EPOCHS_TIMES} 轮训练 ===")
 
-        dataset = OthelloDataset(data_dir, batch_idx=batch_idx)
-        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+        selected_indices = np.random.choice(total_batches, NUM_BATCHES_PER_EPOCH, replace=False)
+        print(f"选择批次: {selected_indices}")
 
-        for epoch in range(NUM_EPOCHS_TIMES):
+        for batch_idx in selected_indices:
+            print(f"加载批次 {batch_idx}...")
+            dataset = OthelloDataset(data_dir, batch_idx=batch_idx)
+            train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
             model.train()
             total_train_loss = 0.0
             total_samples = 0
@@ -166,12 +169,13 @@ def train(model_class=None):
 
             avg_train_loss = total_train_loss / total_samples
             epoch_time = time.time() - epoch_start_time
-            print(f"Epoch [{epoch+1}/{NUM_EPOCHS_TIMES}], Train Loss: {avg_train_loss:.4f}, Time: {epoch_time:.2f}s")
+            print(f"批次 {batch_idx}, Loss: {avg_train_loss:.4f}, Time: {epoch_time:.2f}s")
 
-        del dataset, train_loader
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        print(f"批次 {batch_idx + 1} 训练完成，已卸载数据")
+            del dataset, train_loader
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        print(f"第 {epoch + 1} 轮训练完成")
 
     torch.save(model.state_dict(), MODEL_CLASS+'.pth')
     print(f"模型已保存到 {MODEL_CLASS}.pth")
