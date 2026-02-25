@@ -216,7 +216,7 @@ function new_client(){
             // 检查是否需要保存文件
             if(samples_list.length >= Game_Per_File){
                 let time = get_time_string()
-                fs.writeFileSync(`one_network/samples_depth_${Egaroucid_DEPTH}_${time}.txt`, JSON.stringify(samples_list,null,2))
+                fs.writeFileSync(`data_one/samples_depth_${Egaroucid_DEPTH}_${time}.txt`, JSON.stringify(samples_list,null,2))
                 console.log(`save ${samples_list.length} game to samples_depth_${Egaroucid_DEPTH}_${time}.txt`)
                 samples_list = []
             }

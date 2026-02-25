@@ -161,9 +161,9 @@ function generate_value_sample_one_game() {
 }
 
 async function generate_samples(){
-    let top = fs.readFileSync('value_network/top.txt', 'utf8').trim()
+    let top = fs.readFileSync('data_value/top.txt', 'utf8').trim()
     top = parseInt(top) + 1
-    let file = fs.createWriteStream(`value_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, {flags: 'a'});
+    let file = fs.createWriteStream(`data_value/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, {flags: 'a'});
     for(let i = 0 ; i < 10 ; i ++){
         let start_time = Date.now()
         let samples = await generate_value_sample_one_game()
@@ -174,7 +174,7 @@ async function generate_samples(){
         }
     }
     file.end();
-    fs.writeFileSync('value_network/top.txt', top.toString())
+    fs.writeFileSync('data_value/top.txt', top.toString())
 }
 
 for(let x = 1 ; x <= 100 ; x++){

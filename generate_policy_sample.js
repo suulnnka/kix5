@@ -13,7 +13,7 @@ const first_random_move = 8
 function generate_policy_sample(){
     let top = 0
     try{
-        top = fs.readFileSync('./policy_network/top.txt', 'utf8').trim()
+        top = fs.readFileSync('./data_policy/top.txt', 'utf8').trim()
         top = parseInt(top)
     }catch(err){}
     top = top + 1
@@ -30,8 +30,8 @@ function generate_policy_sample(){
         ]
     );
 
-    fs.writeFileSync(`./policy_network/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, stdout.toString(), 'utf8')
-    fs.writeFileSync('./policy_network/top.txt', top.toString(), 'utf8')
+    fs.writeFileSync(`./data_policy/samples_depth_${Egaroucid_DEPTH}_${top}.txt`, stdout.toString(), 'utf8')
+    fs.writeFileSync('./data_policy/top.txt', top.toString(), 'utf8')
 }
 
 for(let i = 0 ; i < 30 ; i++){
