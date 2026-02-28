@@ -8,10 +8,10 @@ import time
 import argparse
 
 
-MODEL_CLASS = 'cnn'
+MODEL_CLASS = 'resnet'
 NUM_EPOCHS_TIMES = 20
 NUM_BATCHES_PER_EPOCH = 4
-BATCH_SIZE = 2048
+BATCH_SIZE = 1024
 USE_CUDA = True
 
 

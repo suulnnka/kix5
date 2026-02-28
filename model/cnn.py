@@ -2,6 +2,7 @@ import torch.nn as nn
 from base import BaseValueNet
 
 # 537k 参数
+# MSE Loss 31.5291
 
 class ValueNet(BaseValueNet):
     def __init__(self):
