@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from base import BaseValueNet
 
-# 1.77M 参数
+# 1M 参数
 
 class ResNetBlock(nn.Module):
     def __init__(self, channels):
@@ -32,7 +32,7 @@ class ValueNet(BaseValueNet):
     def __init__(self):
         super().__init__()
 
-        channels = 128
+        channels = 96
 
         # 初始卷积层
         self.conv1 = nn.Conv2d(2, channels, 3, padding=1, bias=False)
@@ -47,10 +47,15 @@ class ValueNet(BaseValueNet):
         self.block5 = ResNetBlock(channels)
         self.block6 = ResNetBlock(channels)
         
-        # 池化和全连接层
-        self.pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Linear(channels, 1)
-    
+        #self.pool = nn.AdaptiveAvgPool2d(1)
+        #self.fc = nn.Linear(channels, 1)
+
+        self.value_conv = nn.Conv2d(channels, 2, kernel_size=1)
+        self.value_bn = nn.BatchNorm2d(2)
+        self.fc_extra = nn.Linear(2*8*8, 64)
+        self.fc_out = nn.Linear(64, 1)
+
+
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))
         
@@ -61,9 +66,18 @@ class ValueNet(BaseValueNet):
         x = self.block5(x)
         x = self.block6(x)
         
-        x = self.pool(x)
+        #x = self.pool(x)
+        #x = x.view(x.size(0), -1)
+        #x = self.fc(x)
+
+        x = self.value_conv(x)
+        x = self.value_bn(x)
+        x = self.relu(x)
+
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        x = self.fc_extra(x)
+        x = self.relu(x)
+        x = self.fc_out(x)
         
         return x
     
