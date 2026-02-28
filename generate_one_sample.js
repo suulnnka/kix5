@@ -178,7 +178,7 @@ function get_time_string(){
 
     top_p ++;
     let str_top_p = top_p.toString().padStart(3, '0');
-    const result = `${day}${month}${year}_${hours}${minutes}${seconds}.${str_top_p}`;
+    const result = `${year}${month}${day}_${hours}${minutes}${seconds}.${str_top_p}`;
     return result
 }
 
