@@ -186,7 +186,8 @@ def evaluate(model_class=None):
     if model_class is None:
         model_class = __import__(MODEL_CLASS).ValueNet
 
-    data_dir = r"..\Egaroucid_Train_Data\0001_egaroucid_7_5_1_lv17"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, "Egaroucid_Train_Data", "0001_egaroucid_7_5_1_lv17")
     
     model = model_class()
     model = model.to(device)
