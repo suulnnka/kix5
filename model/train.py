@@ -28,7 +28,8 @@ print(f"使用设备: {device}")
 
 
 def preprocess_data():
-    data_dir = r"..\Egaroucid_Train_Data\0001_egaroucid_7_5_1_lv17"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, "Egaroucid_Train_Data", "0001_egaroucid_7_5_1_lv17")
     txt_files = sorted(glob.glob(os.path.join(data_dir, "*.txt")))
     print(f"找到 {len(txt_files)} 个txt文件")
 
