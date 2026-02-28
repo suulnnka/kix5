@@ -12,7 +12,7 @@ MODEL_CLASS = 'cnn'
 NUM_EPOCHS_TIMES = 20
 NUM_BATCHES_PER_EPOCH = 4
 BATCH_SIZE = 2048
-USE_CUDA = False
+USE_CUDA = True
 
 
 def get_device():
