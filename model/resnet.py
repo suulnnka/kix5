@@ -2,6 +2,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from base import BaseValueNet
 
+# 全局变量
+CHANNELS = 96
+BLOCKS_NUM = 6
+
 # 1M 参数
 # MSE Loss 30.3376
 
@@ -33,25 +37,20 @@ class ValueNet(BaseValueNet):
     def __init__(self):
         super().__init__()
 
-        channels = 96
-
         # 初始卷积层
-        self.conv1 = nn.Conv2d(2, channels, 3, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(channels)
+        self.conv1 = nn.Conv2d(2, CHANNELS, 3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(CHANNELS)
         self.relu = nn.ReLU()
         
-        # 6个形状相同的ResNet block
-        self.block1 = ResNetBlock(channels)
-        self.block2 = ResNetBlock(channels)
-        self.block3 = ResNetBlock(channels)
-        self.block4 = ResNetBlock(channels)
-        self.block5 = ResNetBlock(channels)
-        self.block6 = ResNetBlock(channels)
+        # 创建ResNet block
+        self.blocks = nn.ModuleList()
+        for i in range(BLOCKS_NUM):
+            self.blocks.append(ResNetBlock(CHANNELS))
         
         #self.pool = nn.AdaptiveAvgPool2d(1)
-        #self.fc = nn.Linear(channels, 1)
+        #self.fc = nn.Linear(CHANNELS, 1)
 
-        self.value_conv = nn.Conv2d(channels, 2, kernel_size=1)
+        self.value_conv = nn.Conv2d(CHANNELS, 2, kernel_size=1)
         self.value_bn = nn.BatchNorm2d(2)
         self.fc_extra = nn.Linear(2*8*8, 64)
         self.fc_out = nn.Linear(64, 1)
@@ -60,12 +59,8 @@ class ValueNet(BaseValueNet):
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))
         
-        x = self.block1(x)
-        x = self.block2(x)
-        x = self.block3(x)
-        x = self.block4(x)
-        x = self.block5(x)
-        x = self.block6(x)
+        for block in self.blocks:
+            x = block(x)
         
         #x = self.pool(x)
         #x = x.view(x.size(0), -1)

@@ -4,10 +4,11 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import time
 import argparse
+import os
 
 
 MODEL_CLASS = 'cnn'
-NUM_EPOCHS_TIMES = 3
+NUM_EPOCHS_TIMES = 7
 BATCH_SIZE = 1024
 USE_CUDA = True
 
@@ -18,6 +19,13 @@ USE_CUDA = True
 # 4 level MSE 15.8776
 # 5 level MSE 14.2098
 # 6 level MSE 12.3423
+
+# mlp  50k 参数 MSE Loss 51.1104
+# cnn 537k 参数 MSE Loss 33.5506
+# resnet channels 96 block 6 MSE Loss 31.1249 21
+# resnet channels 64 block 6 MSE Loss 32.0040 26
+# resnet channels 128 block 8 MSE Loss 30.2003 16
+
 
 def get_device():
     if USE_CUDA and torch.cuda.is_available():
@@ -51,6 +59,11 @@ def train(model_class=None):
 
     model = model_class()
     model = model.to(device)
+    if os.path.exists(MODEL_CLASS+'1.pth'):
+        model.load_state_dict(torch.load(MODEL_CLASS+'1.pth'))
+        print("已加载已有模型")
+    else:
+        print("新建模型")
 
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -83,10 +96,13 @@ def train(model_class=None):
         epoch_time = time.time() - epoch_start_time
         print(f"轮次 {epoch + 1}, Loss: {avg_train_loss:.4f}, Time: {epoch_time:.2f}s")
 
-        print(f"第 {epoch + 1} 轮训练完成")
+        torch.save(model.state_dict(), MODEL_CLASS+'1.pth')
+        print(f"模型已保存到 {MODEL_CLASS}1.pth")
+        
+        print(f"第 {epoch + 1} 轮训练完成，开始评估...")
+        evaluate()
 
-    torch.save(model.state_dict(), MODEL_CLASS+'1.pth')
-    print(f"模型已保存到 {MODEL_CLASS}1.pth")
+    print("所有轮次训练完成")
 
 
 def evaluate(model_class=None):
