@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from base import BaseValueNet
 
 # 1M 参数
+# MSE Loss 30.3376
 
 class ResNetBlock(nn.Module):
     def __init__(self, channels):
