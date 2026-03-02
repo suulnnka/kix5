@@ -3,6 +3,8 @@ Test for model
 CNN
 RNN
 ResNet
+SENet
+DenseNet
 Transformer
 Mamba
 
