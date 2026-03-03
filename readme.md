@@ -8,6 +8,8 @@ DenseNet
 Transformer
 Mamba
 
+katago Global Pooling,Bottleneck
+
 use MCTS
 
 model head include
