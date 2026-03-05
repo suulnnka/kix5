@@ -9,6 +9,9 @@ BLOCKS_NUM = 3
 GROWTH_RATE = 48
 COMPRESSION_RATE = 0.5
 
+# 1.9M
+# 训练速度太慢了 116s一轮
+
 
 class DenseLayer(nn.Module):
     def __init__(self, in_channels):

@@ -7,8 +7,8 @@ import argparse
 import os
 
 
-MODEL_CLASS = 'cnn'
-NUM_EPOCHS_TIMES = 7
+MODEL_CLASS = 'katago'
+NUM_EPOCHS_TIMES = 13
 BATCH_SIZE = 1024
 USE_CUDA = True
 
@@ -22,10 +22,11 @@ USE_CUDA = True
 
 # mlp  50k 参数 MSE Loss 51.1104
 # cnn 537k 参数 MSE Loss 33.5506
-# resnet channels 96 block 6 MSE Loss 31.1249 21
+# resnet channels 96 block 6 1M MSE Loss 31.1249 21
 # resnet channels 64 block 6 MSE Loss 32.0040 26
 # resnet channels 128 block 8 MSE Loss 30.2003 16
-
+# densenet 1.9M 训练速度太慢了 116s 一轮 14轮 还有下降潜力 但是算了吧 28.9290 / 21.9259
+# katago 1.7M 更慢 132s 一轮 20轮 27.8908 / 23.7038 没看出什么优势
 
 def get_device():
     if USE_CUDA and torch.cuda.is_available():

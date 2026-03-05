@@ -39,7 +39,7 @@ class KataBottleneck(nn.Module):
         
         return F.relu(out + identity)
 
-class OthelloValueNet(BaseValueNet):
+class ValueNet(BaseValueNet):
     def __init__(self):
         super().__init__()
         # 输入：[B, 2, 8, 8] -> 0层: 自己的棋子, 1层: 对方的棋子
@@ -63,8 +63,7 @@ class OthelloValueNet(BaseValueNet):
             nn.Linear(CHANNELS, 128),
             nn.ReLU(inplace=True),
             nn.Dropout(0.2), # 估值函数容易过拟合，加入 Dropout
-            nn.Linear(128, 1),
-            nn.Tanh() # 输出 [-1, 1]，表示从“必败”到“必胜”
+            nn.Linear(128, 1)
         )
 
     def forward(self, x):
