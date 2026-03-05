@@ -10,6 +10,8 @@ Mamba
 
 katago Global Pooling,Bottleneck
 
+跟参数量关系大,模型结构关系不大
+
 use MCTS
 
 model head include
