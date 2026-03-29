@@ -28,3 +28,13 @@ model input
 8*8 board opponent
 8*8 board move list / mobility
 1 current trun number
+
+传统估值到胜率的训练映射
+
+胜率公式
+P = 1 / (1 + e^(-ax))
+a取大概0.2-0.3之间
+
+选择公式
+softmax(x_i) = exp(x_i / T) / sum(exp(x_j / T))
+T取1左右
